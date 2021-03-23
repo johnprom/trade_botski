@@ -11,10 +11,15 @@
 - add "trading" capabilties
 - add functionality for routine trades/ trade bot capabilities
 
-#### Build Project | Requirements and How-To 
+#### Build Project | Requirements 
 - Python 3
 - cmake (pip install cmake)
 - conan (pip install conan)
-- 'conan install . --install-folder build'
-- 'conan build . --build-folder build --install-folder build'
-- '.\build\bin\BotskiTrading.exe'
+
+#### Build Project | How to Run
+
+> conan install . --install-folder build
+
+> conan build . --build-folder build --install-folder build
+
+> .\build\bin\BotskiTrading.exe
