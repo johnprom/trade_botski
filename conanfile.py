@@ -15,6 +15,15 @@ class BotskiTradingConan(ConanFile):
     generators = "cmake"
     exports_sources = "src/*"
 
+    requires = ()
+
+    def requirements(self):
+        self.requires("sfml/2.5.1@bincrafters/stable")
+        self.options["sfml"].graphics = True
+        self.options["sfml"].window = True
+        self.options["sfml"].audio = False
+        self.options["sfml"].network = True
+
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC

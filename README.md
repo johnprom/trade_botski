@@ -18,8 +18,14 @@
 
 #### Build Project | How to Run
 
-> conan install . --install-folder build
+> conan install . --install-folder build --build missing
 
 > conan build . --build-folder build --install-folder build
 
 > .\build\bin\BotskiTrading.exe
+
+> conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+
+> conan profile update settings.cppstd=17 default
+
+> conan install .
