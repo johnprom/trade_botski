@@ -29,3 +29,9 @@
 > conan profile update settings.cppstd=17 default
 
 > conan install .
+
+#### Debug 
+
+> conan install . --install-folder build --build missing -s build_type=Debug
+
+> conan build . --build-folder build --install-folder build --config Debug

@@ -23,6 +23,8 @@ class BotskiTradingConan(ConanFile):
         self.options["sfml"].window = True
         self.options["sfml"].audio = False
         self.options["sfml"].network = True
+        self.requires("easyhttpcpp/2.1.0")
+        self.requires("jsonformoderncpp/3.7.0")
 
     def config_options(self):
         if self.settings.os == "Windows":
