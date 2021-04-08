@@ -3,7 +3,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-
+#include <math.h>
+#include <string>
 #include "easyhttpcpp/EasyHttp.h"
 #include <nlohmann/json.hpp>
 
@@ -43,22 +44,89 @@ std::string fn(std::string url) {
     return pResponse->getBody()->toString();
 }
 
-std::string fn2(){
+std::string get_current_price_string(){
     std::string s = fn("https://api.coindesk.com/v1/bpi/currentprice.json");
     // parse explicitly
     auto j3 = json::parse(s);
     return j3["bpi"]["USD"]["rate"];
 }
 
+std::string dollar_format (float f, bool is_signed){ //add bool for has commas
+
+    std::string str = std::to_string(f);
+    std::string str_format;
+
+    for(int i = 0 ; i < str.length() ; i++){
+        if(i == 0){
+            if(str.at(i) == '-'){
+                if(is_signed){
+                    str_format.append(1, '-');
+                } 
+                str_format.append(1, '$');
+            }else{
+                if(is_signed){
+                    str_format.append(1, '+');
+                } 
+                str_format.append(1, '$');
+                str_format.append(1, str.at(i));
+            }
+        }else if(str.at(i) == '.'){
+            str_format.append(1, '.');
+            str_format.append(1, str.at(i+1));
+            str_format.append(1, str.at(i+2));
+            return str_format;
+        }else{
+            str_format.append(1, str.at(i));
+        }
+    }
+    return str_format;
+}
+
+// std::string format_currency_unsigned(std::string str){
+//     //parse through to only 2 numb after dcimal no +-
+// }
+
+float get_current_price(){
+    std::string s = fn("https://api.coindesk.com/v1/bpi/currentprice.json");
+    // parse explicitly
+    auto j3 = json::parse(s);
+    return j3["bpi"]["USD"]["rate_float"];
+}
+
+int marketColor(float current_change){
+    if(current_change < 0){
+        return 1; //red
+    }else{
+        return 2; //green
+    }
+}
+
 int main() {
 
+    float current_change = 0;
+    float current_price = get_current_price();
+
+    //init window
     sf::RenderWindow window(sf::VideoMode(900, 600), "SFML window");
     window.setFramerateLimit(10);
 
+    //fonts
     sf::Font font;
     if (!font.loadFromFile("src/fonts/arial.ttf"))
         return EXIT_FAILURE;
-    sf::Text text(fn2(), font, 50);
+
+    //header text for coin name
+    sf::Text coin_name("Bitcoin BTC/USD", font, 50);
+    coin_name.setFillColor(sf::Color(255,153,0));
+    coin_name.setPosition(20, 20);
+
+    //price text
+    sf::Text price_text(dollar_format(current_price, false), font, 50);
+    price_text.setPosition(20,100);
+
+    //price change text
+    sf::Text price_change_text(dollar_format(current_change, true), font, 50) ;
+    price_change_text.setPosition(20,160);
 
     while (window.isOpen()) {
         // Process events
@@ -71,147 +139,34 @@ int main() {
                 window.close();
             }
         }
-        text.setString(fn2());
 
+        //update current price and relative change variables when change occurs
+        if(current_price != get_current_price()){
+            current_change =  get_current_price() - current_price;
+            current_price = get_current_price();
+        } 
+
+        //update price text
+        price_text.setString(dollar_format(current_price, false));
+
+        //update change text
+        price_change_text.setString(dollar_format(current_change, true));
+
+
+        if(marketColor(current_change) == 1){
+            price_change_text.setFillColor(sf::Color::Red);
+        }else{
+            price_change_text.setFillColor(sf::Color::Green);
+        }
+        
         window.clear(sf::Color::Black);
 
         // Draw the string
-        window.draw(text);
+        window.draw(price_text);
+        window.draw(price_change_text);
+        window.draw(coin_name);
 
         window.display();
     }
     return EXIT_SUCCESS;
 }
-
-// int window_width = 1200;
-// int window_height = 900;
-// int refresh_rate = 20;
-
-// //sprite variables
-// int speed = 200;
-// int offset = speed / refresh_rate;
-// float size = 0.2f;
-// float size2 = 0.6f;
-
-// //returns an unseeded random boolean
-// bool randBool() {
-//     return rand() % 2;
-// }
-
-// //return true if there is no collision between sprite a and sprite b on horizontal axis
-// bool collision_free(sf::Sprite spriteA, sf::Sprite spriteB) {
-//         return !(((spriteA.getGlobalBounds().width / 2 + spriteB.getGlobalBounds().width / 2) >
-//               abs((spriteA.getPosition().x + spriteA.getGlobalBounds().width / 2) - (spriteB.getPosition().x + spriteB.getGlobalBounds().width / 2))) &&
-//              ((spriteA.getGlobalBounds().height / 2 + spriteB.getGlobalBounds().height / 2) >
-//               abs((spriteA.getPosition().y + spriteA.getGlobalBounds().height / 2) - (spriteB.getPosition().y + spriteB.getGlobalBounds().height / 2))));
-// }
-
-// //detemines if sprite can move in given direction
-// bool in_bounds_upper(sf::Sprite sprite, float dt) {
-//     return (sprite.getPosition().y - (dt*speed) > 0);
-// }
-// bool in_bounds_left(sf::Sprite sprite, float dt) {
-//     return (sprite.getPosition().x - (dt*speed) > 0);
-// }
-// bool in_bounds_right(sf::Sprite sprite, float dt) {
-//     return (sprite.getPosition().x + sprite.getGlobalBounds().width + (dt*speed) < window_width);
-// }
-// bool in_bounds_lower(sf::Sprite sprite, float dt) {
-//     return (sprite.getPosition().y + sprite.getGlobalBounds().height + (dt*speed) < window_height);
-// }
-
-// int main() {
-//     sf::Clock tr;
-
-//     sf::Texture texture_DaBaby;
-//     texture_DaBaby.loadFromFile("src/textures/dababycar.jpg");
-
-//     sf::Texture texture_CopCar;
-//     texture_CopCar.loadFromFile("src/textures/cursedEmojiHands.jpg");
-
-//     sf::RenderWindow window(sf::VideoMode(window_width, window_height), "SFML window");
-//     window.setFramerateLimit(refresh_rate);
-
-//     sf::Sprite car;
-//     car.setTexture(texture_DaBaby);
-//     car.setScale(size, size);
-//     car.setPosition(300, 300);
-
-//     sf::Sprite car2;
-//     car2.setTexture(texture_CopCar);
-//     car2.setScale(size2, size2);
-
-//     while (window.isOpen()) {
-//         // Process events
-//         sf::Event event;
-
-//         while (window.pollEvent(event)) {
-//             // Close window: exit
-
-//             if (event.type == sf::Event::Closed) {
-//                 window.close();
-//             }
-//         }
-//         // Clear screen
-
-//         // if (randBool() == true) {
-//         //     window.clear(sf::Color::Blue);
-//         // } else {
-//         //     window.clear(sf::Color::Red);
-//         // }
-
-//         window.clear(sf::Color::Black);
-
-//         float deltaTime = tr.restart().asSeconds();
-
-//         //wasd movement for sprite
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-//             if (in_bounds_upper(car, deltaTime) && collision_free(car, car2)) {
-//                 car.move(0.f, -speed * deltaTime);
-//             }
-//         }
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-//             if (in_bounds_lower(car, deltaTime) && collision_free(car, car2)) {
-//                 car.move(0.f, speed * deltaTime);
-//             }
-//         }
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-//             if (in_bounds_left(car, deltaTime) && collision_free(car, car2)) {
-//                 car.move(-speed * deltaTime, 0.f);
-//             }
-//         }
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-//             if (in_bounds_right(car, deltaTime) && collision_free(car, car2)) {
-//                 car.move(speed * deltaTime, 0.f);
-//             }
-//         }
-
-//         //ijkl movement for sprite2
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::I)) {
-//             if (in_bounds_upper(car2, deltaTime) && collision_free(car, car2)) {
-//                 car2.move(0.f, -speed * deltaTime);
-//             }
-//         }
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
-//             if (in_bounds_lower(car2, deltaTime) && collision_free(car, car2)) {
-//                 car2.move(0.f, speed * deltaTime);
-//             }
-//         }
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) {
-//             if (in_bounds_left(car2, deltaTime) && collision_free(car, car2)) {
-//                 car2.move(-speed * deltaTime, 0.f);
-//             }
-//         }
-//         if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
-//             if (in_bounds_right(car2, deltaTime) && collision_free(car, car2)) {
-//                 car2.move(speed * deltaTime, 0.f);
-//             }
-//         }
-
-//         window.draw(car);
-//         window.draw(car2);
-
-//         window.display();
-//     }
-//     return EXIT_SUCCESS;
-// }
